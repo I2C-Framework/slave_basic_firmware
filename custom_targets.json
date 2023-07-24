@@ -1,0 +1,13 @@
+{
+    "STM32G071GBU6": {
+        "inherits": [
+            "MCU_STM32G071xB"
+        ],
+        "device_name": "STM32G071GBUx",
+        "mbed_rom_start": "0x08000000",
+		"mbed_rom_size": "0x20000",
+		"mbed_ram_start": "0x20000000",
+		"mbed_ram_size": "0x9000",
+		"bootloader_supported": true
+    }
+}
