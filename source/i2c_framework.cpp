@@ -41,6 +41,7 @@ void I2C_Framework::loop_iteration()
 
         case I2CSlave::ReadAddressed:
             printf("i2c_register : 0x%x\n", i2c_register);
+            
 
             switch (i2c_register){
                 case UID_REG: // Write Unique ID
@@ -64,11 +65,11 @@ void I2C_Framework::loop_iteration()
                     break;
 
                 case SENSOR_TYPE_REG: // Write sensor type
-                    slave.write((char*) &active_app_metadata_ram.sensor_type, 30);
+                    slave.write((char*) active_app_metadata_ram.sensor_type, 32);
                     break;
                 
                 case NAME_REG: // Write name of sensor
-                    slave.write((char*) &active_app_metadata_ram.name, 30);
+                    slave.write((char*) active_app_metadata_ram.name, 32);
                     break;
 
                 default: // Register not set with write before, return default value
@@ -86,7 +87,10 @@ void I2C_Framework::loop_iteration()
             break;
 
         case I2CSlave::WriteAddressed:
-            rc = slave.read(buffer, 31);
+            // Clear buffer
+            memset(buffer, 0, 33);
+
+            rc = slave.read(buffer, 33);
 
             printf("Register : 0x%x\n", buffer[0]);
 
@@ -96,7 +100,6 @@ void I2C_Framework::loop_iteration()
             switch (buffer[0]){
                 case GROUP_REG:
                     if(buffer[1] > 0){
-                        printf("group : %d\n", buffer[1]);
                         active_app_metadata_ram.group = buffer[1];
                         save_metadata_to_flash();
                     }
@@ -110,13 +113,17 @@ void I2C_Framework::loop_iteration()
                     break;
 
                 case SENSOR_TYPE_REG:
-                    memcpy(&active_app_metadata_ram.sensor_type, &buffer[1], 30);
-                    save_metadata_to_flash();
+                    if(buffer[1] > 0){
+                        memcpy(&active_app_metadata_ram.sensor_type, &buffer[1], 32);
+                        save_metadata_to_flash();
+                    }
                     break;
 
                 case NAME_REG:
-                    memcpy(&active_app_metadata_ram.name, &buffer[1], 30);
-                    save_metadata_to_flash();
+                    if(buffer[1] > 0){
+                        memcpy(&active_app_metadata_ram.name, &buffer[1], 32);
+                        save_metadata_to_flash();
+                    }
                     break;
 
                 default:

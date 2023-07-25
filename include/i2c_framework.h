@@ -75,10 +75,10 @@ private:
 
     struct app_metadata_t{
         uint32_t magic_firmware_need_update;
-        uint8_t group;
-        char sensor_type[30];
-        char name[30];
-    }__attribute__((__packed__));
+        uint32_t group;
+        char sensor_type[32];
+        char name[32];
+    };
 
     I2CSlave slave;
     I2C master;
@@ -91,7 +91,7 @@ private:
     uint8_t i2c_register;
     int rc;
     char register_address[1];
-    char buffer[31];
+    char buffer[33];
 };
 
 
