@@ -106,31 +106,34 @@ void I2C_Framework::loop_iteration()
             i2c_register = buffer[0];
 
             switch (buffer[0]){
-                case GROUP_REG:
+                case GROUP_REG: // If new group is received, save to flash
                     if(buffer[1] > 0){
                         active_app_metadata_ram.group = buffer[1];
                         save_metadata_to_flash();
+                        i2c_register = 0;
                     }
                     break;
 
-                case FIRMWARE_REG:
+                case FIRMWARE_REG: // If it's firmware register, set flag to update firmware and restart MCU
                     active_app_metadata_ram.magic_firmware_need_update = MAGIC_FIRMWARE_NEED_UPDATE;
                     save_metadata_to_flash();
                     // Restart MCU to update firmware from bootloader
                     NVIC_SystemReset();
                     break;
 
-                case SENSOR_TYPE_REG:
+                case SENSOR_TYPE_REG: // If new sensor type is received, save to flash
                     if(buffer[1] > 0){
                         memcpy(&active_app_metadata_ram.sensor_type, &buffer[1], 32);
                         save_metadata_to_flash();
+                        i2c_register = 0;
                     }
                     break;
 
-                case NAME_REG:
+                case NAME_REG: // If new name is received, save to flash
                     if(buffer[1] > 0){
                         memcpy(&active_app_metadata_ram.name, &buffer[1], 32);
                         save_metadata_to_flash();
+                        i2c_register = 0;
                     }
                     break;
 
@@ -170,7 +173,6 @@ void I2C_Framework::setup_i2c()
     // Generate a random wait time with unique ID
     uint16_t wait_time = (id) % 1000;
 
-    
     // Set slave address to 0x00 to disable slave for now
     slave.address(0);
     slave.frequency(I2C_FREQ);
