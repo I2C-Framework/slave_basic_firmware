@@ -1,8 +1,9 @@
 #include "i2c_framework.h"
 #include <cstdio>
 
-I2C_Framework::I2C_Framework(PinName sda, PinName scl) : slave(sda, scl), master(sda, scl), flash(), scl_status(scl)
+I2C_Framework::I2C_Framework(PinName sda, PinName scl) : slave(sda, scl), master(sda, scl), flash(), scl_status(scl), led_status(LED_STATUS)
 {
+    // Set i2c register to 0
     i2c_register = 0;
 
     // Get unique ID by unreference pointer
@@ -20,14 +21,17 @@ void I2C_Framework::init()
     // Print Unique ID of MCU
     printf("ID : 0x%x\n", id);
 
+    // Init flash class
     flash.init();
 
     // Copy metadata from flash to RAM
     rc = flash.read((char *) &active_app_metadata_ram, APPLICATION_METADATA_ADDRESS, sizeof(app_metadata_t));
     if(rc != 0){
         printf("Error reading metadata from flash\r\n");
+        led_status = 1;
     }
 
+    // Setup i2c communication
     setup_i2c();
 
     // Get watchdog instance
@@ -152,16 +156,19 @@ void I2C_Framework::save_metadata_to_flash()
     rc = flash.erase(APPLICATION_METADATA_ADDRESS, 2048);
     if(rc != 0){
         printf("Erase metadata from flash failed\n");
+        led_status = 1;
     }
     // Set metadata from RAM to flash
     rc = flash.program((char *) &active_app_metadata_ram, APPLICATION_METADATA_ADDRESS, sizeof(app_metadata_t));
     if(rc != 0){
         printf("Error writing metadata from flash\r\n");
+        led_status = 1;
     }
     // Copy metadata from flash to RAM
     rc = flash.read((char *) &active_app_metadata_ram, APPLICATION_METADATA_ADDRESS, sizeof(app_metadata_t));
     if(rc != 0){
         printf("Error reading metadata from flash\r\n");
+        led_status = 1;
     }
 }
 

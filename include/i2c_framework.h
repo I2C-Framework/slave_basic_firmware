@@ -82,6 +82,7 @@ private:
     Watchdog *watchdog;
 
     DigitalIn scl_status;
+    DigitalOut led_status;
     app_header_t *active_app_header;
     app_metadata_t *active_app_metadata_flash;
     app_metadata_t active_app_metadata_ram;
