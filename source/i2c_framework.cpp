@@ -1,7 +1,7 @@
 #include "i2c_framework.h"
 #include <cstdio>
 
-I2C_Framework::I2C_Framework(PinName sda, PinName scl) : slave(sda, scl), master(sda, scl), flash()
+I2C_Framework::I2C_Framework(PinName sda, PinName scl) : slave(sda, scl), master(sda, scl), flash(), scl_status(scl)
 {
     i2c_register = 0;
 
@@ -30,34 +30,41 @@ void I2C_Framework::init()
 
     setup_i2c();
 
+    // Get watchdog instance
+    watchdog = &Watchdog::get_instance();
+    // Start watchdog
+    watchdog->start(WATCHDOG_TIMEOUT);
+
     printf("I2C Framework ready with I2C address 0x%x\n", slave_addr);
+}
+
+void I2C_Framework::check_scl(){
+    // If nothing appended to SCL, reset watchdog time
+    if(scl_status == 1){
+        watchdog->kick();
+    }
 }
 
 void I2C_Framework::loop_iteration()
 {
+    // Check if SCL is stuck
+    check_scl();
+    
     // Check if i2c slave has been addressed
     int i = slave.receive();
+    
     switch (i) {
-
         case I2CSlave::ReadAddressed:
-            printf("i2c_register : 0x%x\n", i2c_register);
             
+            printf("i2c_register : 0x%x\n", i2c_register);
 
             switch (i2c_register){
                 case UID_REG: // Write Unique ID
-                    slave.write((char*) &id, 4);
+                    rc = slave.write((char*) &id, 4);
                     break;
 
-                case MAJOR_VERSION_REG: // Write major version of firmware
-                    slave.write(active_app_header->major_version);
-                    break;
-                
-                case MINOR_VERSION_REG: // Write minor version of firmware
-                    slave.write(active_app_header->minor_version);
-                    break;
-                
-                case FIX_VERSION_REG: // Write fix version of firmware
-                    slave.write(active_app_header->fix_version);
+                case VERSION_HASH_REG: // Write major version of firmware
+                    slave.write((char*) active_app_header->firmware_version_hash, 32);
                     break;
                 
                 case GROUP_REG: // Write group of sensor
@@ -80,6 +87,7 @@ void I2C_Framework::loop_iteration()
             }
 
             i2c_register = 0;
+
             break;
 
         case I2CSlave::WriteGeneral:
@@ -132,6 +140,7 @@ void I2C_Framework::loop_iteration()
             
             break;
     }
+    
 }
 
 void I2C_Framework::save_metadata_to_flash()
@@ -167,7 +176,6 @@ void I2C_Framework::setup_i2c()
     slave.frequency(I2C_FREQ);
 
     // Wait for a random time to avoid collision
-    //thread_sleep_for(wait_time);
     HAL_Delay(wait_time);
 
     master.frequency(I2C_FREQ);

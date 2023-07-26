@@ -21,9 +21,7 @@
                 ["magic", "const", "32le", "0xdeadbeef"],
                 ["firmware_size", "size", "64le", ["application"]],
                 ["firmware_crc", "digest", "CRCITT32le", "application"],
-                ["major_version", "const", "8le", "0"],
-                ["minor_version", "const", "8le", "1"],
-                ["fix_version", "const", "8le", "0"]
+                ["firmware_version_hash", "digest", "SHA256", "application"]
             ],
             "target.bootloader_img": "C:/Users/kevin/Mbed Programs/custom_bootloader/BUILD/STM32G071GBU6/ARMC6/custom_bootloader_application.bin"
         }

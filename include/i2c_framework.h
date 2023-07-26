@@ -18,18 +18,13 @@
 #error[NOT_SUPPORTED] FLASH is not supported
 #endif
 
-// I2C Frequency
-
-
 // I2C Registers
 #define FIRMWARE_REG (0xA0)
 #define UID_REG (0xA1)
-#define MAJOR_VERSION_REG (0xA2)
-#define MINOR_VERSION_REG (0xA3)
-#define FIX_VERSION_REG (0xA4)
-#define GROUP_REG (0xA5)
-#define SENSOR_TYPE_REG (0xA6)
-#define NAME_REG (0xA7)
+#define VERSION_HASH_REG (0xA2)
+#define GROUP_REG (0xA3)
+#define SENSOR_TYPE_REG (0xA4)
+#define NAME_REG (0xA5)
 
 // Flash Addresses
 #define FIRMWARE_STATUS_ADDRESS (0x0801FF00)
@@ -41,6 +36,7 @@
 #define MAGIC_FIRMWARE_NEED_UPDATE (0xDEADBEEF)
 #define I2C_READ_DEFAULT_VALUE (0x42)
 #define I2C_FREQ (100000)
+#define WATCHDOG_TIMEOUT (5000)
 
 class I2C_Framework
 {
@@ -63,14 +59,14 @@ private:
      * Save metadata from RAM (active_app_metadata_save) to flash (active_app_metadata)
      */
     void save_metadata_to_flash();
+
+    void check_scl();
     
     struct app_header_t{
         uint32_t magic;
         uint64_t firmware_size;
         uint32_t firmware_crc;
-        uint8_t major_version;
-        uint8_t minor_version;
-        uint8_t fix_version;
+        unsigned char firmware_version_hash[32];
     }__attribute__((__packed__));
 
     struct app_metadata_t{
@@ -83,6 +79,9 @@ private:
     I2CSlave slave;
     I2C master;
     FlashIAP flash;
+    Watchdog *watchdog;
+
+    DigitalIn scl_status;
     app_header_t *active_app_header;
     app_metadata_t *active_app_metadata_flash;
     app_metadata_t active_app_metadata_ram;
