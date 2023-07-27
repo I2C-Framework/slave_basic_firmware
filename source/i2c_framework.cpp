@@ -6,6 +6,9 @@ I2C_Framework::I2C_Framework(PinName sda, PinName scl) : slave(sda, scl), master
     // Set i2c register to 0
     i2c_register = 0;
 
+    // Set size of elements array to 0
+    i2c_callback_array_size = 0;
+
     // Get unique ID by unreference pointer
     id = *((uint32_t *)UNIQUE_ID_ADDR);
 
@@ -61,6 +64,22 @@ void I2C_Framework::loop_iteration()
         case I2CSlave::ReadAddressed:
             
             printf("i2c_register : 0x%x\n", i2c_register);
+
+            for(int i = 0; i < i2c_callback_array_size; i++){
+                if(i2c_callback_array[i][0] == i2c_register){
+                    // Get read callback from array
+                    char * (*read_callback)() = (char * (*)()) i2c_callback_array[i][1];
+                    // Call read callback
+                    char *data = read_callback();
+                    // Write data to i2c slave
+                    slave.write(data, i2c_callback_array[i][3]);
+                    // Free memory
+                    free(data);
+                    // Set register to 0
+                    i2c_register = 0;
+                    return;
+                }
+            }
 
             switch (i2c_register){
                 case UID_REG: // Write Unique ID
@@ -144,6 +163,18 @@ void I2C_Framework::loop_iteration()
                 default:
                     break;
             }
+
+            
+            for(int i = 0; i < i2c_callback_array_size; i++){
+                if(i2c_callback_array[i][0] == i2c_register){
+                    // Get write callback from array
+                    int (*write_callback)(char *) = (int (*)(char *)) i2c_callback_array[i][2];
+                    // Call write callback
+                    i2c_register = write_callback(buffer);
+                    return;
+                }
+            }
+            
             
             break;
     }
@@ -211,4 +242,19 @@ void I2C_Framework::setup_i2c()
     
     // Loop until slave address is busy
     } while (rc == 0);
+}
+
+void I2C_Framework::init_i2c_callback_size(int size){
+    i2c_callback_array = new uint32_t*[size];
+    for(int i = 0; i < size; i++){
+        i2c_callback_array[i] = new uint32_t[4];
+    }
+}
+
+void I2C_Framework::add_i2c_callback(int register_address, char * (*read_callback)(), int (*write_callback)(char *buffer), int data_size){
+    i2c_callback_array[i2c_callback_array_size][0] = register_address;
+    i2c_callback_array[i2c_callback_array_size][1] = reinterpret_cast<uint32_t>(read_callback);
+    i2c_callback_array[i2c_callback_array_size][2] = reinterpret_cast<uint32_t>(write_callback);
+    i2c_callback_array[i2c_callback_array_size][3] = data_size;
+    i2c_callback_array_size++;
 }

@@ -48,6 +48,10 @@ public:
     void init();
 
     void loop_iteration();
+
+    void init_i2c_callback_size(int size);
+
+    void add_i2c_callback(int register_address, char * (*read_callback)(), int (*write_callback)(char *buffer), int data_size);
     
 private:
 
@@ -76,10 +80,11 @@ private:
         char name[32];
     };
 
-    I2CSlave slave;
     I2C master;
     FlashIAP flash;
     Watchdog *watchdog;
+    I2CSlave slave;
+    
 
     DigitalIn scl_status;
     DigitalOut led_status;
@@ -89,6 +94,8 @@ private:
     uint32_t id;
     uint16_t slave_addr;
     uint8_t i2c_register;
+    uint32_t **i2c_callback_array;
+    int i2c_callback_array_size;
     int rc;
     char register_address[1];
     char buffer[33];
