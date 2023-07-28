@@ -126,8 +126,8 @@ typedef enum {
 
     I2C1_SCL = PB_6,
     I2C1_SDA = PB_7,
-    I2C2_SCL = PA_9,
-    I2C2_SDA = PA_10,
+    I2C2_SCL = PA_11,
+    I2C2_SDA = PA_12,
 
 #ifdef TARGET_FF_ARDUINO_UNO
     // Arduino Uno (Rev3) pins
