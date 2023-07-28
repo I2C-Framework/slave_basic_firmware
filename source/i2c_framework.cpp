@@ -17,12 +17,15 @@ I2C_Framework::I2C_Framework(PinName sda, PinName scl) : slave(sda, scl), master
 
     // Get access to application metadata in flash
     active_app_metadata_flash = (app_metadata_t *)APPLICATION_METADATA_ADDRESS;
+
+    // Clear buffer
+    memset(buffer, 0, 33);
 }
 
 void I2C_Framework::init()
 {
     // Print Unique ID of MCU
-    printf("ID : 0x%x\n", id);
+    //printf("ID : 0x%x\n", id);
 
     // Init flash class
     flash.init();
@@ -30,7 +33,7 @@ void I2C_Framework::init()
     // Copy metadata from flash to RAM
     rc = flash.read((char *) &active_app_metadata_ram, APPLICATION_METADATA_ADDRESS, sizeof(app_metadata_t));
     if(rc != 0){
-        printf("Error reading metadata from flash\r\n");
+        //printf("Error reading metadata from flash\r\n");
         led_status = 1;
     }
 
@@ -42,7 +45,7 @@ void I2C_Framework::init()
     // Start watchdog
     watchdog->start(WATCHDOG_TIMEOUT);
 
-    printf("I2C Framework ready with I2C address 0x%x\n", slave_addr);
+    //printf("I2C Framework ready with I2C address 0x%x\n", slave_addr);
 }
 
 void I2C_Framework::check_scl(){
@@ -58,12 +61,12 @@ void I2C_Framework::loop_iteration()
     check_scl();
     
     // Check if i2c slave has been addressed
-    int i = slave.receive();
+    slave_action = slave.receive();
     
-    switch (i) {
+    switch (slave_action) {
         case I2CSlave::ReadAddressed:
             
-            printf("i2c_register : 0x%x\n", i2c_register);
+            //printf("i2c_register : 0x%x\n", i2c_register);
 
             for(int i = 0; i < i2c_callback_array_size; i++){
                 if(i2c_callback_array[i][0] == i2c_register){
@@ -73,17 +76,16 @@ void I2C_Framework::loop_iteration()
                     char *data = read_callback();
                     // Write data to i2c slave
                     slave.write(data, i2c_callback_array[i][3]);
-                    // Free memory
-                    free(data);
                     // Set register to 0
                     i2c_register = 0;
                     return;
                 }
             }
+            
 
             switch (i2c_register){
                 case UID_REG: // Write Unique ID
-                    rc = slave.write((char*) &id, 4);
+                    slave.write((char *) &id, 4);
                     break;
 
                 case VERSION_HASH_REG: // Write major version of firmware
@@ -103,7 +105,7 @@ void I2C_Framework::loop_iteration()
                     break;
 
                 default: // Register not set with write before, return default value
-                    printf("Default value, 0x%x\n", I2C_READ_DEFAULT_VALUE);
+                    //printf("Default value, 0x%x\n", I2C_READ_DEFAULT_VALUE);
                     int data = I2C_READ_DEFAULT_VALUE;
                     slave.write(data);
                     break;
@@ -118,12 +120,9 @@ void I2C_Framework::loop_iteration()
             break;
 
         case I2CSlave::WriteAddressed:
-            // Clear buffer
-            memset(buffer, 0, 33);
-
             rc = slave.read(buffer, 33);
 
-            printf("Register : 0x%x\n", buffer[0]);
+            //printf("Register : 0x%x\n", buffer[0]);
 
             // Set register for next read
             i2c_register = buffer[0];
@@ -171,10 +170,11 @@ void I2C_Framework::loop_iteration()
                     int (*write_callback)(char *) = (int (*)(char *)) i2c_callback_array[i][2];
                     // Call write callback
                     i2c_register = write_callback(buffer);
-                    return;
                 }
             }
-            
+
+            // Clear buffer
+            memset(buffer, 0, 33);
             
             break;
     }
@@ -186,19 +186,19 @@ void I2C_Framework::save_metadata_to_flash()
     // Erase sector on metadata address
     rc = flash.erase(APPLICATION_METADATA_ADDRESS, 2048);
     if(rc != 0){
-        printf("Erase metadata from flash failed\n");
+        //printf("Erase metadata from flash failed\n");
         led_status = 1;
     }
     // Set metadata from RAM to flash
     rc = flash.program((char *) &active_app_metadata_ram, APPLICATION_METADATA_ADDRESS, sizeof(app_metadata_t));
     if(rc != 0){
-        printf("Error writing metadata from flash\r\n");
+        //printf("Error writing metadata from flash\r\n");
         led_status = 1;
     }
     // Copy metadata from flash to RAM
     rc = flash.read((char *) &active_app_metadata_ram, APPLICATION_METADATA_ADDRESS, sizeof(app_metadata_t));
     if(rc != 0){
-        printf("Error reading metadata from flash\r\n");
+        //printf("Error reading metadata from flash\r\n");
         led_status = 1;
     }
 }

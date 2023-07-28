@@ -64,7 +64,7 @@ private:
      */
     void save_metadata_to_flash();
 
-    void check_scl();
+    void check_scl();    
     
     struct app_header_t{
         uint32_t magic;
@@ -84,7 +84,6 @@ private:
     FlashIAP flash;
     Watchdog *watchdog;
     I2CSlave slave;
-    
 
     DigitalIn scl_status;
     DigitalOut led_status;
@@ -95,6 +94,7 @@ private:
     uint16_t slave_addr;
     uint8_t i2c_register;
     uint32_t **i2c_callback_array;
+    int slave_action;
     int i2c_callback_array_size;
     int rc;
     char register_address[1];
