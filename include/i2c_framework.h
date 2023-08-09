@@ -42,15 +42,33 @@ class I2C_Framework
 {
 
 public:
-
+    /**
+     * Constructor
+    */
     I2C_Framework(PinName sda, PinName scl);
 
+    /**
+     * Initialize I2C framework
+    */
     void init();
 
+    /**
+     * Function to be called in main loop
+    */
     void loop_iteration();
 
+    /**
+     * Init the all the callbacks for the I2C slave
+     * @param size: number of callbacks
+    */
     void init_i2c_callback_size(int size);
 
+    /**
+     * Add a callback for a specific register
+     * @param register_address: register address to add callback
+     * @param read_callback: function to be called when a read is requested, return a char * buffer with the data to be sent
+     * @param write_callback: function to be called when a write is requested, buffer contains the data to be written (first is register), return the number of register for next read if needed else 0
+    */
     void add_i2c_callback(int register_address, char * (*read_callback)(), int (*write_callback)(char *buffer), int data_size);
     
 private:
@@ -59,13 +77,18 @@ private:
      * Setup I2C slave with a random address
      */
     void setup_i2c();
+
     /**
      * Save metadata from RAM (active_app_metadata_save) to flash (active_app_metadata)
      */
     void save_metadata_to_flash();
 
+    /**
+     * Check if I2C scl signal is ok, reset watchdog if it is
+    */
     void check_scl();    
     
+    // Application header structure
     struct app_header_t{
         uint32_t magic;
         uint64_t firmware_size;
@@ -73,6 +96,7 @@ private:
         unsigned char firmware_version_hash[32];
     }__attribute__((__packed__));
 
+    // Application metadata structure
     struct app_metadata_t{
         uint32_t magic_firmware_need_update;
         uint32_t group;
