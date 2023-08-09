@@ -10,7 +10,7 @@
                 ["firmware_crc", "digest", "CRCITT32le", "application"],
                 ["firmware_version_hash", "digest", "SHA256", "application"]
             ],
-            "target.bootloader_img": "custom_bootloader_application.bin"
+            "target.bootloader_img": "slave_bootloader_application.bin"
         }
     }
 }
